@@ -21,7 +21,7 @@ st.markdown("""
 # Sidebar settings
 st.sidebar.header("💵 비용 및 확률 설정")
 st.sidebar.markdown("게임 내 재화 가치를 설정하여 실제 금액으로 환산합니다.")
-draw_price = st.sidebar.number_input("1회 뽑기 가격 (단위: 원/크리스탈)", min_value=1, value=300, step=10)
+draw_price = st.sidebar.number_input("1회 뽑기 가격 (단위: 원/크리스탈)", min_value=1, value=50, step=10)
 
 # Main Section
 col1, col2 = st.columns(2)
