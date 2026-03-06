@@ -70,13 +70,15 @@ if st.session_state.df_sim is not None:
             """)
         
         with col_b:
-            # 빈도수 계산
+            # 빈도수 계산 (value_counts 결과의 컬럼명을 명시적으로 처리)
             dist_data = df_sim[selected_grade].value_counts().sort_index().reset_index()
-            dist_data.columns = [selected_grade, '유저 수']
             
-            fig_dist = px.bar(dist_data, x=selected_grade, y='유저 수',
+            # Pandas 버전에 따라 컬럼명이 'index', 0 또는 'index', 'count' 등으로 나올 수 있으므로 강제 지정
+            dist_data.columns = ['획득 횟수', '유저 수']
+            
+            fig_dist = px.bar(dist_data, x='획득 횟수', y='유저 수',
                              title=f"{n_draws}회 뽑기 시 {selected_grade} 획득 빈도 분포 ({n_trials}명 시뮬레이션)",
-                             labels={selected_grade: '획득 횟수(Hits)', '유저 수': '유저 수(Users)'},
+                             labels={'획득 횟수': '획득 횟수(Hits)', '유저 수': '유저 수(Users)'},
                              color_discrete_sequence=['#636EFA'])
             
             fig_dist.update_layout(bargap=0.1)

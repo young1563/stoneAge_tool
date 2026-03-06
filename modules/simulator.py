@@ -15,19 +15,12 @@ def run_gacha_simulation(probs, n_draws, n_trials=1000):
         # Normalize
         p_values = [p / total_p for p in p_values]
         
-    results = []
+    # np.random.multinomial을 사용하여 모든 시행을 한 번에 계산 (성능 최적화)
+    # n_draws번 뽑기를 n_trials번 반복했을 때의 각 등급별 획득 횟수를 행렬로 반환
+    counts_matrix = np.random.multinomial(n_draws, p_values, size=n_trials)
     
-    for _ in range(n_trials):
-        draws = np.random.choice(grades, size=n_draws, p=p_values)
-        unique, counts = np.unique(draws, return_counts=True)
-        trial_res = dict(zip(unique, counts))
-        # Fill missing grades with 0
-        for grade in grades:
-            if grade not in trial_res:
-                trial_res[grade] = 0
-        results.append(trial_res)
-        
-    return pd.DataFrame(results)
+    # 결과를 데이터프레임으로 변환
+    return pd.DataFrame(counts_matrix, columns=grades)
 
 def get_simulation_summary(df):
     """
