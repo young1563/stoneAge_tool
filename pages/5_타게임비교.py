@@ -6,10 +6,52 @@ from modules.data_loader import get_base_probs, get_pickup_probs
 
 st.set_page_config(page_title="타 게임 벤치마크 비교", layout="wide")
 
-st.title("⚖️ 타 게임 벤치마크 비교")
+# ----- 프리미엄 시각화 스타일링 -----
 st.markdown("""
-본 페이지에서는 시장 내 메이저 가챠 게임들의 확률 설계와 **스톤에이지 분석 모델**을 비교합니다. 
-장르별(수집형 RPG vs 방치형 RPG) 확률 설계의 차이점을 파악하고 기획적 시사점을 도출합니다.
+<style>
+    /* 비교 카드 스타일 */
+    .compare-card {
+        background: #fdfdfd;
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid #eee;
+        height: 100%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        transition: all 0.3s ease;
+    }
+    .compare-card:hover {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        transform: translateY(-5px);
+    }
+    .vs-tag {
+        color: #ff4b4b;
+        font-weight: 900;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        opacity: 0.5;
+    }
+    .highlight-red { color: #ff4b4b; font-weight: bold; }
+    .highlight-blue { color: #636EFA; font-weight: bold; }
+    
+    /* 하단 요약 배경 */
+    .summary-box {
+        background: linear-gradient(135deg, #1e1e2f 0%, #2d2d44 100%);
+        color: white;
+        padding: 35px;
+        border-radius: 20px;
+        border-left: 6px solid #ff4b4b;
+        margin-top: 40px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.title("⚖️ 가챠 벤치마크 분석")
+st.markdown("""
+장르별(수집형 RPG vs 방치형 RPG) 확률 설계의 본질적인 차이점을 데이터를 통해 비교합니다. 
+기획자로서 **'확률의 높고 낮음'**이 아닌 **'경험의 차이'**에 집중하여 분석합니다.
 """)
 st.markdown("---")
 
@@ -30,58 +72,69 @@ benchmark_data.append({"게임명": "스톤에이지 (분석 모델)", "장르":
 
 df_bench = pd.DataFrame(benchmark_data)
 
-# Section 1: Comparison Table
-st.header("1. 주요 가챠 게임 확률 설계 비교")
-st.dataframe(df_bench.style.highlight_max(axis=0, subset=['SSR 확률 (%)', '픽업 확률 (%)'], color='#D4EFDF')
-                          .highlight_min(axis=0, subset=['SSR 확률 (%)', '픽업 확률 (%)'], color='#FADBD8'))
-
-st.info("💡 **데이터 해석:** 수집형 RPG(RPG)는 뽑기 시도 횟수가 적은 대신 개별 확률이 높고, 방치형(Idle)은 시도 횟수가 압도적으로 많은 대신 개별 확률을 낮게 설정합니다.")
-
-# Section 2: Visual Comparison (Log Scale)
-st.header("2. 최고 등급 획득 확률 시각화 (Log Scale)")
-st.markdown("스톤에이지와 같은 방치형 게임은 일반 RPG 대비 확률이 수백 배 낮기 때문에, 로그 스케일로 시각화하여 비교합니다.")
-
+# Section 1: Comparison Visualization
+st.header("1. 장르별 최고 등급 확률 분포 (로그 스케일)")
 fig_bar = px.bar(df_bench, x='게임명', y='SSR 확률 (%)', color='장르', 
-                 text='SSR 확률 (%)', title='게임별 최고 등급(SSR/SS) 기본 확률 비교',
-                 log_y=True) # Use log scale because 0.0075 is too small compared to 4.0
+                 text='SSR 확률 (%)', title='게임별 SSR/SS 기본 확률 (Log Scale)',
+                 height=500, log_y=True, color_discrete_sequence=px.colors.qualitative.Set1)
 fig_bar.update_traces(texttemplate='%{text:.4f}%', textposition='outside')
+fig_bar.update_layout(xaxis_title="", yaxis_title="기본 확률 (%)", showlegend=True)
 st.plotly_chart(fig_bar, use_container_width=True)
 
-# Section 3: Analysis Commentary
-st.header("3. 시스템 기획적 분석 (Insight)")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("""
-    ### 🧱 수집형 RPG 모델 (High-Value)
-    - **특징:** 캐릭터 하나하나의 가치가 매우 높음.
-    - **설계:** 낮은 뽑기 횟수 + 높은 확률 (1~4%).
-    - **천장:** 70~200회 사이에서 강력한 보정(Soft Pity) 발동.
-    - **매출 구조:** 소수의 고액 과금러와 다수의 소액 과금러가 공존.
-    """)
-
-with col2:
-    st.markdown("""
-    ### 🌾 방치형 RPG 모델 (High-Volume)
-    - **특징:** 캐릭터 성장 단계(초월 등)가 많아 대량의 베이스가 필요함.
-    - **설계:** **압도적인 뽑기 횟수** + 낮은 확률 (0.007x%).
-    - **천장:** 천장 횟수 자체가 높거나(예: 300~500회), 마일리지를 쌓아 선택권을 구매하는 방식.
-    - **매출 구조:** 광고 시청 및 '뽑기권 패키지'를 통한 박리다매형 매출.
-    """)
-
 st.markdown("---")
-st.subheader("🏁 결론: '박리다매' 가챠 시스템의 생존 전략 (안정적인 경제 밸런스)")
-st.success("""
-벤치마크 분석 결과, 스톤에이지 같은 방치형 게임은 **'낮은 확률로 대량의 기회를 주는(박리다매)'** 구조를 가지고 있습니다. 
-하지만 무분별하게 아이템을 배포하면 캐릭터의 가치가 금방 떨어지고 게임의 수명이 짧아질 위험(인플레이션)이 있습니다.
 
-따라서 우리 프로젝트 분석 모델의 핵심은 **"오늘 당장 대박이 날까?"**라는 단발성 운 보다는, 
-**"일주일, 한 달 동안 꾸준히 뽑았을 때 유저가 손에 쥐는 결과물은 총 몇 개인가?"**라는 **장기적 기대값**을 산출하는 데 있습니다.
+# Section 2: 핵심 설계 로직 요약 (VS 카드)
+st.header("2. 시스템 설계 철학 비교 (Core Logic)")
 
-이러한 정밀한 분석은 다음과 같은 기획적 성취를 목표로 합니다:
-1. **과금 유저:** 투자한 만큼의 확실한 성장을 보장하여 **'재화의 가치'**를 유지합니다.
-2. **무과금 유저:** 꾸준한 플레이만으로도 충분한 획득 재미를 느껴 **'플레이 동기'**를 유지합니다.
+c_lo, c_vs, c_hi = st.columns([1, 0.2, 1])
 
-결국, 이 도구는 돈을 쓰는 재미와 안 쓰는 재미 사이의 **'황금 밸런스'**를 찾아내어 게임의 경제 시스템이 오랫동안 건강하게 유지되도록 돕는 **데이터 기반의 나침반** 역할을 수행합니다.
-""")
+with c_lo:
+    st.markdown("""
+    <div class="compare-card">
+        <h2 style="color:#e63946; margin-top:0;">🧱 수집형 모델 (High-Value)</h2>
+        <p style="color:#666; font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:10px;"><b>"하나를 얻어도 확실한 가치"</b></p>
+        <ul style="line-height:2.2; font-size:1rem; padding-left:20px;">
+            <li><b>확률 체감:</b> <span class="highlight-red">1% ~ 4%</span> (당첨 기대감 높음)</li>
+            <li><b>재화 공급:</b> 무료 뽑기가 한정적이며 개별 가치가 매우 높음</li>
+            <li><b>천장 시스템:</b> 70~200회 사이의 강력한 확정 획득 보정</li>
+            <li><b>기획 초점:</b> 신규 캐릭터 출시 시 <b>단기 매출 폭발력</b></li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+with c_vs:
+    st.markdown('<div class="vs-tag">VS</div>', unsafe_allow_html=True)
+
+with c_hi:
+    st.markdown("""
+    <div class="compare-card">
+        <h2 style="color:#636EFA; margin-top:0;">🌾 방치형 모델 (High-Volume)</h2>
+        <p style="color:#666; font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:10px;"><b>"끊임없는 획득과 성장의 쾌감"</b></p>
+        <ul style="line-height:2.2; font-size:1rem; padding-left:20px;">
+            <li><b>확률 체감:</b> <span class="highlight-blue">0.007% ~ 0.1%</span> (당첨 확률 매우 낮음)</li>
+            <li><b>재화 공급:</b> <b>매일 수백 회</b>의 압도적 무료 뽑기 공급</li>
+            <li><b>천장 시스템:</b> 300~500회 이상의 높은 천장 (마일리지 개념)</li>
+            <li><b>기획 초점:</b> 대량 배포를 통한 <b>장기 리텐션과 성장 유도</b></li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Section 3: Strategic Conclusion
+st.markdown("""
+<div class="summary-box">
+    <h2 style="margin-top:0; color:white;">🏁 전략적 분석 결론: '박리다매' 시스템의 핵심</h2>
+    <p style="font-size:1.1rem; line-height:1.7; opacity:0.9;">
+        방치형 게임인 스톤에이지 시스템의 본질은 "오늘 대박이 날까?" 하는 단발성 운이 아니라, 
+        <b>"한 달간의 꾸준한 뽑기로 손에 쥐는 총 결과물이 몇 개인가?"</b> 하는 장기적 기대값에 있습니다.
+    </p>
+    <div style="background:rgba(255,255,255,0.1); padding:20px; border-radius:10px; margin-top:15px;">
+        <b>기획자의 역할:</b> 단순히 낮은 확률을 방치하는 것이 아니라, 대량 배포 과정에서 발생하는 
+        <b>'재화 가치 하락(인플레이션)'</b>을 방어하면서도, 유저가 끊임없이 <b>'성장의 즐거움'</b>을 
+        느끼게 하는 황금 밸런스를 유지하는 나침반이 되어야 합니다.
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# 데이터 백업 (작게 표시)
+with st.expander("📊 로우 데이터 테이블 확인"):
+    st.dataframe(df_bench, use_container_width=True)
